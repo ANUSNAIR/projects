@@ -19,28 +19,17 @@ from scipy.signal import find_peaks
 import winsound
 import pyttsx3
 
-
-
-
-
-#
 def DataSort(filename,flty,c_name):
       #Getting data from the file and extracing a particular data from it
       print("Opening file ",filename)
       print('Calculating ',c_name)
-
-
 
       if flty=='Qx' :
             data=[]
             reader = pd.read_csv(filename,skiprows =[i for i in range(37)],dtype=object,delimiter="\t")
             reader.columns=['ST_2.4kHz', 'ST_50Hz', 'PT_K1', 'PT_K3','RP_8','RP_9','IWP','LC_1','LC_2','ST_2.4KHz','PT_SW1','PT_SW2','PT_SW3','PT_SW4','PT_K2','PT_K4','PT_K5','PT_K6','19']
 
-
-
             data=pd.to_numeric(reader[c_name], errors='coerce').fillna(0, downcast='infer')
-
-
 
             #ti=[i/2400 for i in data.index]
             print("----------------------------Complete file preview--------------------------")
@@ -49,20 +38,8 @@ def DataSort(filename,flty,c_name):
             print(data.head())
             print("____________________________Done reading data______________________________")
             
-
-
-
-
             return(data)
             
-
-
-
-
-
-
-
-
 
 def PeakFinder(dat,tr_hd,tr_dis):
       print('threshold (y)= ',tr_hd,'[mm]')
@@ -79,19 +56,12 @@ def PeakFinder(dat,tr_hd,tr_dis):
 #      plt.plot(df.index, df['data'])
       df['time']=[i/2400 for i in dat.index]
 
-
-
-
-
-
-
       #print(df)
       #n=8000 # number of points to be checked before and after 
       # Find local peaks
       #df['min'] = df.iloc[argrelextrema(df.data.values, np.less_equal, order=n)[0]]['data']
       #df['max'] = df.iloc[argrelextrema(df.data.values, np.greater_equal, order=n)[0]]['data']
       df['max'] = df.iloc[find_peaks(df.data.values, height=tr_hd,distance=tr_dis)[0]]['data']
-      
       
       df=df.dropna()  # drop nan from the dataframe
       print("--------------------------------Peaks preview----------------------------- ")
@@ -113,7 +83,6 @@ def PeakFinder(dat,tr_hd,tr_dis):
 
 #      plt.show()
       #fig.savefig('test.pdf')
-
       return(df)
       
 def scaleUp_std(df,ttype):
@@ -168,15 +137,6 @@ def MeanNPeak(df) :
       #plt.show()
       return([SignOfPeaks,stat.mean(dat),MaxVal])
 
-
-
-
-
-      
-      
-
-
-
 if __name__== "__main__":
       import sys
       engine = pyttsx3.init()
@@ -184,18 +144,12 @@ if __name__== "__main__":
       ###################################################################################
       
       fl_name=["Results/FullLoad/B_360/S8.txt"]
-
       fl_out='Results/FullLoad/B_360/PressureTransducers/S8.out'
-
-
       sys.stdout = open(fl_out,'wt')
 #      pt_name=['PT_K2']
       datum= 0
       cutoffht=-50
       cutoffq=1200
-
-
-      
 
       ###################################################################################
       if input('Password: ')!='f*****f':
@@ -216,18 +170,9 @@ if __name__== "__main__":
       now = datetime.datetime.now()
       print ("Current date and time : ")
       print (now.strftime("%Y-%m-%d %H:%M:%S"))
-      
-      
-
       print ("___________________________________________________________________________") 
-      
- 
-
 
       print ("___________________________________________________________________________")  
-      
-      
-      
       
 
       outD=[['file','sensor','datum','cutoffht','Cutoffbar','cutoffq','Significant','Avarage','Mmax']]
@@ -242,18 +187,14 @@ if __name__== "__main__":
       engine.runAndWait()
 
       if input(qtxt1)=='****':exit()
- 
-
       if input(qtxt2)=='****':exit()
       for j in fl_name:
             for i in pt_name:
-
                   data=DataSort(j,"Qx",i)
-                  
+          
                   fig = plt.figure(num=None, figsize=(20, 8), dpi=80, facecolor='w', edgecolor='k')
                   plt.plot(data)
                   
-
                   df=PeakFinder(data,cutoffht,cutoffq)
                   
                   plt.scatter(df.index, df['max'], c='g')
@@ -267,25 +208,15 @@ if __name__== "__main__":
                   engine.say('Plot created')
                   engine.runAndWait()
 
-
                   plt.pause(20)
                   winsound.Beep(440,300)
-
-
 
                   while input("need more time? [enter] ")=='':
 
                         plt.pause(10)
                         winsound.Beep(440,300)     
-                        
-
-
-
 
                   plt.close()
-
-                  
-
 
                   chk=input("change controls? [enter] ")
                   
@@ -313,7 +244,6 @@ if __name__== "__main__":
                         plt.pause(10)
                         winsound.Beep(440,300)
 
-
                         while input("need more time? [enter] ")=='':
 
                               plt.pause(10)
@@ -323,28 +253,18 @@ if __name__== "__main__":
 
                         chk=input("change controls? [enter] ")
 
-
-
-
                   [S,A,M]=MeanNPeak(df)
                   print('datum','cutoffht','Cutoffbar','cutoffq','Significant','Avarage','Mmax')
                   print(datum,cutoffht,scaleUp_std(cutoffht,3),cutoffq,S,A,M)
 
-
-
                   outD.append([j,i,datum,cutoffht,scaleUp_std(cutoffht,3),cutoffq,S,A,M])
                   Endtxt=i+' is done !!. Any notes? '
-
-
                   print('Note: ',input(Endtxt))
                   winsound.Beep(240,400)
                   flag=input("***********NEXT SENSOR? [enter to continue/**** to break]")
                   if flag =='****': 
                         winsound.Beep(440,2000)
                         break    
-
-                  
-                  
 
                   print ("-----------------------------End of the probe r----------------------------")
                   print ("___________________________________________________________________________")
