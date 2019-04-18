@@ -10,12 +10,15 @@ Created on Wed Mar  6 10:07:40 2019
 # Load the required packages
 import pandas as pd
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 #from scipy.signal import argrelextrema
 from scipy.signal import find_peaks
 
 #import numpy as np
 #import time 
+import winsound
+import pyttsx3
+
 
 
 
@@ -24,6 +27,7 @@ from scipy.signal import find_peaks
 def DataSort(filename,flty,c_name):
       #Getting data from the file and extracing a particular data from it
       print("Opening file ",filename)
+      print('Calculating ',c_name)
 
 
 
@@ -60,9 +64,10 @@ def DataSort(filename,flty,c_name):
 
 
 
-def PeakFinder(dat,tr_hd):
-      print('thrushhold= ',tr_hd,'[mm]')
-      print('thrushhold= ',scaleUp_std(tr_hd,3),'[bar]')
+def PeakFinder(dat,tr_hd,tr_dis):
+      print('threshold (y)= ',tr_hd,'[mm]')
+      print('threshold (y)= ',scaleUp_std(tr_hd,3),'[bar]')
+      print('threshold (x)= ',tr_dis,'samples')
 #      scale_fac=9.81*1025/1000/1000/100
 #      tr_hd=tr_hd/scale_fac
 
@@ -70,6 +75,8 @@ def PeakFinder(dat,tr_hd):
       #find out peak and mean values frm the file
 
       df = pd.DataFrame(dat.values, columns=['data'])
+#      fig = plt.figure(1)
+#      plt.plot(df.index, df['data'])
       df['time']=[i/2400 for i in dat.index]
 
 
@@ -83,25 +90,28 @@ def PeakFinder(dat,tr_hd):
       # Find local peaks
       #df['min'] = df.iloc[argrelextrema(df.data.values, np.less_equal, order=n)[0]]['data']
       #df['max'] = df.iloc[argrelextrema(df.data.values, np.greater_equal, order=n)[0]]['data']
-      df['max'] = df.iloc[find_peaks(df.data.values, height=tr_hd)[0]]['data']
+      df['max'] = df.iloc[find_peaks(df.data.values, height=tr_hd,distance=tr_dis)[0]]['data']
       
       
       df=df.dropna()  # drop nan from the dataframe
-      print("-----------------------------Peaks preview-------------------------- ")
+      print("--------------------------------Peaks preview----------------------------- ")
       print(df.head())
+      print("number of peaks = ",df.shape[0])
+      print("-------------------------------------------------------------------------- ")
       # Plot results
-      #fig = plt.figure(1)
-      #plt.scatter(df.index, df['min'], c='r')
-      #plt.scatter(df.index, df['max'], c='g')
-      #plt.plot(df.index, df['data'])
+#      fig = plt.figure(1)
+#      plt.scatter(df.index, df['min'], c='r')
+#      plt.scatter(df.index, df['max'], c='g')
+#      plt.plot(df.index, df['data'])
 
-      #plt.xlabel('index')
-      #plt.ylabel('Pressure[kPa]')
-      #plt.title('Pressure record time series')
+#      plt.xlabel('index')
+#      plt.ylabel('Pressure[mm]')
+#      plt.title('Pressure record time series')
       #plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
       #plt.axis([0, 144000, 0, 1000])
-      #plt.grid(True)
-      #plt.show()
+#      plt.grid(True)
+
+#      plt.show()
       #fig.savefig('test.pdf')
 
       return(df)
@@ -112,6 +122,9 @@ def scaleUp_std(df,ttype):
             #for pressure transducers 
             scale_fac=90
             data=df['data']*9.81*1025/1000*scale_fac/1000/100   #in bar
+            print ('Scale factor = ',scale_fac)
+            print('density of water = ',1025 ,'kg/m^3')
+            print ('acceleration due to gravity =',9.81 ,'m/s^2')
             print("------------------------sacled data preview------------------------------- ")
             print(data.head(10))
             return(data)
@@ -153,21 +166,49 @@ def MeanNPeak(df) :
       #plt.figure(2)
       #plt.plot(dat)
       #plt.show()
+      return([SignOfPeaks,stat.mean(dat),MaxVal])
 
 
 
 
+
+      
       
 
 
 
 if __name__== "__main__":
       import sys
-      sys.stdout = open('270.out','wt')
+      engine = pyttsx3.init()
+
+      ###################################################################################
       
+      fl_name=["Results/FullLoad/B_360/S8.txt"]
+
+      fl_out='Results/FullLoad/B_360/PressureTransducers/S8.out'
+
+
+      sys.stdout = open(fl_out,'wt')
+#      pt_name=['PT_K2']
+      datum= 0
+      cutoffht=-50
+      cutoffq=1200
+
+
+      
+
+      ###################################################################################
+      if input('Password: ')!='f*****f':
+            engine.say('you entered a wrong passkey')
+            engine.runAndWait()
+            winsound.Beep(440,2000)
+
+
+            sys.exit()
+
       print("###########################################################################")
       print("##                             FPSO ANALYSIS                            ###")
-      # print("##         ANU NAIR(Guide: PROF.VAS)   IIT MADRAS, INDIA                ###")
+      print("##         ANU NAIR(Guide: PROF.VAS)   IIT MADRAS, INDIA                ###")
       print("###########################################################################")
 
       print ("\n") 
@@ -175,24 +216,148 @@ if __name__== "__main__":
       now = datetime.datetime.now()
       print ("Current date and time : ")
       print (now.strftime("%Y-%m-%d %H:%M:%S"))
+      
+      
+
+      print ("___________________________________________________________________________") 
+      
+ 
 
 
-      print ("___________________________________________________________________________")   
-      pt_name=['PT_K1','PT_K3','PT_SW1','PT_SW2','PT_SW3','PT_SW4','PT_K2','PT_K4','PT_K5']
-      fl_name=['QX/S1.txt','QX/S2.txt','QX/S3.txt','QX/S4.txt','QX/S5.txt','QX/S6.txt','QX/S7.txt','QX/S8.txt']      
-      for j in fl_name:      
+      print ("___________________________________________________________________________")  
+      
+      
+      
+      
+
+      outD=[['file','sensor','datum','cutoffht','Cutoffbar','cutoffq','Significant','Avarage','Mmax']]
+      pt_name=['PT_K4','PT_K5','PT_SW1','PT_SW4','PT_K2','PT_K6','PT_SW3','PT_SW2','PT_K1','PT_K3']
+
+#      fl_name=['QX/S1.txt','QX/S2.txt','QX/S3.txt','QX/S4.txt','QX/S5.txt','QX/S6.txt','QX/S7.txt','QX/S8.txt'] 
+
+      qtxt1='check in file ' + fl_name[0]
+      qtxt2='check out file ' + fl_out
+      
+      engine.say('Check input and out  file')
+      engine.runAndWait()
+
+      if input(qtxt1)=='****':exit()
+ 
+
+      if input(qtxt2)=='****':exit()
+      for j in fl_name:
             for i in pt_name:
-                  print('Calculating ',i)
-                  data=DataSort(j,"Qx",i)
-                  #scaleUp_std()
-                  #plt.plot(data.index,data)
-                  df=PeakFinder(data,0)
-                  MeanNPeak(df)
 
-            
+                  data=DataSort(j,"Qx",i)
+                  
+                  fig = plt.figure(num=None, figsize=(20, 8), dpi=80, facecolor='w', edgecolor='k')
+                  plt.plot(data)
+                  
+
+                  df=PeakFinder(data,cutoffht,cutoffq)
+                  
+                  plt.scatter(df.index, df['max'], c='g')
+                  plt.xlabel('index')
+                  plt.ylabel('Pressure[mm]')
+                  plt.title('Pressure record time series')
+                  plt.grid(True)
+
+                  plt.show()
+                  plt.draw()
+                  engine.say('Plot created')
+                  engine.runAndWait()
+
+
+                  plt.pause(20)
+                  winsound.Beep(440,300)
+
+
+
+                  while input("need more time? [enter] ")=='':
+
+                        plt.pause(10)
+                        winsound.Beep(440,300)     
+                        
+
+
+
+
+                  plt.close()
+
+                  
+
+
+                  chk=input("change controls? [enter] ")
+                  
+                  while chk=='':
+                        datum=float(input("Datum = "))
+
+                        cutoffht=float(input("thd-Y = "))
+#                        cutoffq=float(input("thd-x = "))
+                        print ("initial value  " ,datum) 
+                        df=PeakFinder(data,cutoffht,cutoffq)
+                        fig = plt.figure(num=None, figsize=(20, 8), dpi=80, facecolor='w', edgecolor='k')
+                        plt.plot(data)
+
+                        plt.scatter(df.index, df['max'], c='g')
+                        plt.xlabel('index')
+                        plt.ylabel('Pressure[mm]')
+                        plt.title('Pressure record time series')
+                        plt.grid(True)
+
+                        plt.show()
+                        plt.draw()
+                        engine.say('Plot created')
+                        engine.runAndWait()
+
+                        plt.pause(10)
+                        winsound.Beep(440,300)
+
+
+                        while input("need more time? [enter] ")=='':
+
+                              plt.pause(10)
+                              winsound.Beep(440,300)
+                        plt.close()
+
+
+                        chk=input("change controls? [enter] ")
+
+
+
+
+                  [S,A,M]=MeanNPeak(df)
+                  print('datum','cutoffht','Cutoffbar','cutoffq','Significant','Avarage','Mmax')
+                  print(datum,cutoffht,scaleUp_std(cutoffht,3),cutoffq,S,A,M)
+
+
+
+                  outD.append([j,i,datum,cutoffht,scaleUp_std(cutoffht,3),cutoffq,S,A,M])
+                  Endtxt=i+' is done !!. Any notes? '
+
+
+                  print('Note: ',input(Endtxt))
+                  winsound.Beep(240,400)
+                  flag=input("***********NEXT SENSOR? [enter to continue/**** to break]")
+                  if flag =='****': 
+                        winsound.Beep(440,2000)
+                        break    
+
+                  
+                  
+
+                  print ("-----------------------------End of the probe r----------------------------")
+                  print ("___________________________________________________________________________")
+
+      from pandas import ExcelWriter
+      Daat=pd.DataFrame(outD)
+
+      writer = ExcelWriter(fl_out + '.xlsx')
+      Daat.to_excel(writer,'Sheet1')
+      writer.save()
       print ("-----------------------------End of the program----------------------------")
       print ("___________________________________________________________________________")
 
-      #%logstart -o
+
 
 
