@@ -1,0 +1,41 @@
+function FindWaveData(y,t)
+% Written by Anu Nair (nyke.anu@gmail.com)
+% input data ; y= signal values t= time 
+
+y2=detrend(y);
+        subplot(3,1,2)
+        plot(t,y2,'--r')
+        xlabel('Time (s)')
+        ylabel('Height (mm)')
+        title('Corrected data')
+        grid on
+        subplot(3,1,1)
+        plot(t,y1,'--g')
+        xlabel('Time (s)')
+        ylabel('Height (mm)')
+        title('Recorded data')
+        grid on
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+D=[t,y2];
+D(:,2)=D(:,2)-mean(D(:,2)); 
+iD=find(diff(sign(D(:,2)))==2);
+iD2=find(diff(sign(D(:,2)))==-2);
+if length(iD)<length(iD2), iD=iD2; end
+k=1:length(iD)-1;
+H(k)=max(D(iD(k):iD(k+1),2))-min(D(iD(k):iD(k+1),2));
+T(k)=max(D(iD(k):iD(k+1),1))-min(D(iD(k):iD(k+1),1));
+        subplot(3,1,3)
+      plot(t,y2,'--r')
+      hold on 
+        xlabel('Time (s)')
+        ylabel('Height (mm)')
+        title('Corrected data')
+        grid on
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+avg_wave_ht=sum(H)/length(H);
+avg_wave_t=sum(T)/length(T);
+        disp('Avg Wave height(mm) -  Avg Wave time period(t) ')
+        disp([ avg_wave_ht  avg_wave_t])
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+end
